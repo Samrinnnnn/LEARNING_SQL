@@ -27,8 +27,8 @@ VALUES('1','SONY MUSIC');
 --.Know constraint_name:
 SELECT constraint_name 
 FROM information_schema.table_constraints 
-WHERE table_name = 'physical_store' 
-AND constraint_type = 'PRIMARY KEY';
+WHERE table_name = 'artist_parent' 
+AND constraint_type = 'FOREIGN KEY';
 
 --5.Remove primary key.
 ALTER TABLE music_label
@@ -58,5 +58,92 @@ DROP CONSTRAINT physical_store_pkey;
 ALTER TABLE physical_store
 ADD PRIMARY KEY(stored_name);
 
+--FOREIGN KEY--
 
- 
+--1.Create Parent Table
+
+CREATE TABLE artist_parent(
+artist_id  SERIAL PRIMARY KEY,
+name VARCHAR(50) NOT NULL
+);
+ --2.Create Child Table with Foreign Key--
+ CREATE TABLE album_child(
+album_id SERIAL PRIMARY KEY,
+title VARCHAR(50),
+artist_id INT,
+FOREIGN KEY(artist_id)
+REFERENCES artist_parent(artist_id)
+ );
+--3.Insert Valid Data
+INSERT INTO artist_parent(name)
+VALUES('RJK');
+INSERT INTO album_child(title,artist_id)
+VALUES('Sunshine',2);
+
+SELECT *from artist;
+--4.Insert Invalid Foreign Key
+
+INSERT INTO album_child(title,artist_id)
+VALUES('RAIN',6);
+--WHAT IF--
+INSERT INTO artist_parent(name)
+VALUES('The Beatles');
+INSERT INTO album_child(title,artist_id)
+VALUES('RAIN',3);
+--5.ON DELETE CASCADE
+CREATE TABLE album_cascade(
+album_id SERIAL PRIMARY KEY,
+artist_id INT,
+FOREIGN KEY(artist_id)
+REFERENCES artist_parent(artist_id)
+ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS album_cascade CASCADE;
+
+--6.ON DELETE SET NULL
+CREATE TABLE album_delete(
+album_id SERIAL PRIMARY KEY,
+artist_id INT,
+FOREIGN KEY(artist_id)
+REFERENCES artist_parent(artist_id)
+ON DELETE SET NULL
+);
+--7.Add Foreign Key Later (ALTER)
+ALTER TABLE album_child
+ADD CONSTRAINT f_artist_id
+FOREIGN KEY(artist_id)
+REFERENCES artist_parent(artist_id);
+
+--8.Composite Foreign Key
+-- a. Create the Parent Table with a Composite Primary Key
+CREATE TABLE PlaylistTrack (
+    PlaylistId INTEGER NOT NULL,
+    TrackId INTEGER NOT NULL,
+    PRIMARY KEY (PlaylistId, TrackId), -- This is a Composite Primary Key
+    FOREIGN KEY (PlaylistId) REFERENCES Playlist (PlaylistId),
+    FOREIGN KEY (TrackId) REFERENCES Track (TrackId)
+);
+-- b. Create the Child Table with a Composite Foreign Key
+CREATE TABLE PlaylistTrackNotes (
+    NoteId SERIAL PRIMARY KEY,
+    PlaylistId INTEGER,
+    TrackId INTEGER,
+    NoteText TEXT,
+    -- This defines the COMPOSITE FOREIGN KEY
+    FOREIGN KEY (PlaylistId, TrackId) 
+        REFERENCES PlaylistTrack (PlaylistId, TrackId)
+        ON DELETE CASCADE
+);
+
+--9.View Foreign Keys in Database
+SELECT *
+FROM information_schema.table_constraints
+WHERE constraint_type = 'FOREIGN KEY';
+
+--10.Drop Foreign Key
+ALTER TABLE album_child
+DROP CONSTRAINT f_artist_id ;
+
+
+
