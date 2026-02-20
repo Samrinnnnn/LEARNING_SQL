@@ -1,1 +1,1 @@
-# LEARNING_SQL
+"Your career growth depends on a strong base. Don't be fooled into thinking the basics are too simple; they are the hardest to master but the most important. Rather than jumping straight to complex theoretical structures, focus on building your skills gradually. One step at a time."
