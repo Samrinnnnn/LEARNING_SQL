@@ -228,6 +228,28 @@ $$;
 --CALL
 SELECT *FROM f_all_tracks(99);
 
+--21.Most Popular Genre by Sales Revenue
+CREATE OR REPLACE FUNCTION f_popular_genre()
+RETURNS TABLE(
+genre_name VARCHAR,
+revenue NUMERIC
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+RETURN QUERY
+SELECT g.name,SUM(i.total):: NUMERIC
+FROM genre g
+JOIN track t on g.genre_id=t.genre_id
+JOIN invoice_line il on t.track_id=il.track_id
+JOIN invoice i ON il.invoice_id=i.invoice_id
+GROUP BY g.name
+ORDER BY revenue;
+END;
+$$;
+
+SELECT *FROM f_popular_genre();
+
 
 
 
@@ -257,5 +279,6 @@ SELECT
 FROM information_schema.columns
 WHERE table_name IN ('customer', 'playlist')
 ORDER BY table_name, column_name;
+
 
 
