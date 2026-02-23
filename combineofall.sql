@@ -137,7 +137,96 @@ SELECT *FROM artist WHERE artist_id=2;
 
 SELECT *from track WHERE track_id=2;
 
+--15.Check Indexes
 
+SELECT *
+FROM pg_indexes
+WHERE tablename = 'track';
+
+
+--16.Most Popular Genre
+SELECT g.name as genre_name,g.genre_id,COUNT(t.track_id) as total_tracks
+FROM genre g
+JOIN track t ON g.genre_id=t.genre_id
+GROUP BY g.genre_id
+ORDER BY total_tracks DESC;
+--IF TOP 5, THEN ADDING LIMIT AFTER ORDER BY
+LIMIT 5;
+
+--17.Create View for Top 5 Artists by Sales
+CREATE VIEW vw_top5_artist as
+
+SELECT a.name as artist_name, SUM(i.total) as revenue
+FROM artist a
+JOIN album al ON a.artist_id=al.artist_id
+JOIN track t ON t.album_id=al.album_id
+JOIN invoice_line il ON t.track_id=il.track_id
+JOIN  invoice i ON il.invoice_id=i.invoice_id
+GROUP BY a.name
+ORDER BY revenue DESC
+LIMIT 5;
+
+--CALL--
+SELECT *FROM  vw_top5_artist;
+
+--18.Function to Return Customer Total Spending
+
+CREATE OR REPLACE FUNCTION total_spending(p_customer_name TEXT)
+RETURNS INT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+total_spending INT;
+BEGIN
+SELECT SUM(i.total) INTO total_spending
+FROM invoice i
+JOIN customer c ON i.customer_id=c.customer_id
+WHERE c.first_name=p_customer_name;
+RETURN total_spending INT;
+END;
+$$;
+--CALL--
+SELECT *FROM total_spending('Kara');
+
+--19 Function that Accepts artist_id,Returns artist name and total number of albums.
+CREATE OR REPLACE FUNCTION f_total_number_albums(p_artist_id INT)
+RETURNS TABLE(
+artist_name VARCHAR,
+total_albums BIGINT  
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+RETURN QUERY
+SELECT a.name,COUNT(al.album_id) 
+FROM artist a
+JOIN album al ON a.artist_id=al.artist_id
+where a.artist_id=p_artist_id
+GROUP BY a.name;
+END;
+$$;
+
+SELECT *FROM f_total_number_albums(99);
+
+--20. Return All Tracks of an Album(Takes album_id,Returns track name + genre)
+
+CREATE OR REPLACE FUNCTION f_all_tracks(p_album_id INT)
+RETURNS TABLE(
+track_name VARCHAR,
+genre_name VARCHAR
+)
+language plpgsql
+AS $$
+BEGIN
+RETURN QUERY
+SELECT t.name, g.name 
+FROM track t
+JOIN genre g ON t.genre_id=g.genre_id
+where t.album_id=p_album_id;
+END;
+$$;
+--CALL
+SELECT *FROM f_all_tracks(99);
 
 
 
@@ -168,4 +257,5 @@ SELECT
 FROM information_schema.columns
 WHERE table_name IN ('customer', 'playlist')
 ORDER BY table_name, column_name;
+
 
